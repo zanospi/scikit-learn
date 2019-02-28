@@ -332,10 +332,14 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         y : Ignored
 
         """
-        if self.metric == 'default' and self.p != 2:
-            warnings.warn("The default value of p will change to p=2.",
-                          FutureWarning)
-            self.p = 2
+        if self.metric == 'default':
+            metric = 'euclidean'
+            if self.p != 2: 
+                warnings.warn('From version 0.23, metric="minkowski" by default. '
+                              'Until then, metric="euclidean" by default, and '
+                              'setting p does not make sense.', 
+                              ChangedBehaviorWarning)
+                self.p = 2
 
         X = check_array(X, accept_sparse='csr')
         clust = dbscan(X, sample_weight=sample_weight,
