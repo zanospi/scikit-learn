@@ -143,6 +143,7 @@
 
 cimport cython
 cimport numpy as np
+from cython.parallel import prange
 from libc.math cimport fabs, sqrt, exp, cos, pow, log
 from libc.stdlib cimport calloc, malloc, free
 from libc.string cimport memcpy
@@ -1181,7 +1182,7 @@ cdef class BinaryTree:
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) nogil except -1:
         """Compute the distance between arrays x1 and x2"""
-        self.n_calls += 1
+        # self.n_calls += 1
         if self.euclidean:
             return euclidean_dist(x1, x2, size)
         else:
@@ -1196,7 +1197,7 @@ cdef class BinaryTree:
         relative rankings of the true distance.  For example, the reduced
         distance for the Euclidean metric is the squared-euclidean distance.
         """
-        self.n_calls += 1
+        # self.n_calls += 1
         if self.euclidean:
             return euclidean_rdist(x1, x2, size)
         else:
@@ -1350,11 +1351,11 @@ cdef class BinaryTree:
                     pt += Xarr.shape[1]
             else:
                 with nogil:
-                    for i in range(Xarr.shape[0]):
-                        reduced_dist_LB = min_rdist(self, 0, pt)
-                        self._query_single_depthfirst(0, pt, i, heap,
+                    for i in prange(Xarr.shape[0], num_threads=10):
+                        reduced_dist_LB = min_rdist(self, 0, pt + i * Xarr.shape[1])
+                        self._query_single_depthfirst(0, pt + i * Xarr.shape[1], i, heap,
                                                       reduced_dist_LB)
-                        pt += Xarr.shape[1]
+                        # pt += Xarr.shape[1]
 
         distances, indices = heap.get_arrays(sort=sort_results)
         distances = self.dist_metric.rdist_to_dist(distances)
@@ -1778,12 +1779,13 @@ cdef class BinaryTree:
         # Case 1: query point is outside node radius:
         #         trim it from the query
         if reduced_dist_LB > heap.largest(i_pt):
-            self.n_trims += 1
+        #     self.n_trims += 1
+            pass
 
         #------------------------------------------------------------
         # Case 2: this is a leaf node.  Update set of nearby points
         elif node_info.is_leaf:
-            self.n_leaves += 1
+        #     self.n_leaves += 1
             for i in range(node_info.idx_start, node_info.idx_end):
                 dist_pt = self.rdist(pt,
                                      &self.data[self.idx_array[i], 0],
@@ -1795,7 +1797,7 @@ cdef class BinaryTree:
         # Case 3: Node is not a leaf.  Recursively query subnodes
         #         starting with the closest
         else:
-            self.n_splits += 1
+        #     self.n_splits += 1
             i1 = 2 * i_node + 1
             i2 = i1 + 1
             reduced_dist_LB_1 = min_rdist(self, i1, pt)

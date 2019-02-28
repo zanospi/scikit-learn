@@ -133,7 +133,8 @@ def get_openmp_flag(compiler):
     return ['-fopenmp']
 
 
-OPENMP_EXTENSIONS = []
+OPENMP_EXTENSIONS = ['sklearn.neighbors.ball_tree',
+                     'sklearn.neighbors.kd_tree']
 
 
 # custom build_ext command to set OpenMP compile flags depending on os and
